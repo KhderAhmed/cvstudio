@@ -1,0 +1,1 @@
+ cd C:\Users\ASUSD\Desktop\cvstudio; .\venv\Scripts\Activate.ps1; cd backend; python manage.py runserver

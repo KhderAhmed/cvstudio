@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<style>
+  /* ===== ATS-Safe CSS ===== */
+  /* خطوط عادية، بلا أعمدة، بلا جداول معقدة، بلا صور خلفية */
+  @page {
+    size: A4;
+    margin: 2cm 1.8cm;
+  }
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Noto Naskh Arabic', 'Noto Sans Arabic', 'DejaVu Sans', 'Arial', sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #000;
+    background: #fff;
+  }
+  h1 {
+    font-size: 22pt;
+    margin-bottom: 4pt;
+    color: #000;
+  }
+  h2 {
+    font-size: 13pt;
+    margin-top: 16pt;
+    margin-bottom: 8pt;
+    padding-bottom: 3pt;
+    border-bottom: 1.5pt solid #333;
+    color: #000;
+    text-transform: uppercase;
+    letter-spacing: 0; /* أي تباعد يكسر اتصال الحروف العربية */
+  }
+  h3 {
+    font-size: 11pt;
+    font-weight: bold;
+    margin-top: 8pt;
+    color: #000;
+  }
+  p, li {
+    font-size: 10.5pt;
+    color: #000;
+    margin-bottom: 3pt;
+  }
+  .contact {
+    font-size: 10pt;
+    color: #333;
+    margin-bottom: 12pt;
+    line-height: 1.7;
+  }
+  .contact span {
+    display: inline-block;
+    margin-left: 12pt;
+  }
+  .job-title {
+    font-size: 12pt;
+    color: #555;
+    margin-bottom: 8pt;
+  }
+  .section {
+    margin-bottom: 12pt;
+  }
+  .bio {
+    font-size: 10.5pt;
+    line-height: 1.6;
+    margin-bottom: 8pt;
+  }
+  .exp-item {
+    margin-bottom: 10pt;
+  }
+  .exp-meta {
+    font-size: 10pt;
+    color: #555;
+    margin-bottom: 3pt;
+  }
+  .exp-desc {
+    font-size: 10.5pt;
+    line-height: 1.5;
+    margin-top: 3pt;
+  }
+  ul {
+    margin-right: 16pt;
+    margin-top: 4pt;
+  }
+  li {
+    margin-bottom: 2pt;
+  }
+  .skills-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .skills-list li {
+    display: inline-block;
+    margin-left: 8pt;
+    margin-bottom: 4pt;
+    font-size: 10.5pt;
+  }
+  .skills-list li::after {
+    content: " ·";
+    color: #666;
+  }
+  .skills-list li:last-child::after {
+    content: "";
+  }
+  .cert-item {
+    margin-bottom: 6pt;
+  }
+  .qr-section {
+    text-align: center;
+    margin-top: 20pt;
+    padding-top: 10pt;
+    border-top: 1pt solid #ccc;
+  }
+  .qr-section p {
+    font-size: 9pt;
+    color: #666;
+    margin-top: 4pt;
+  }
+</style>
+</head>
+<body>
+
+  <!-- رأس -->
+  <header>
+    <h1>{{ resume.full_name }}</h1>
+    {% if resume.job_title %}
+      <p class="job-title">{{ resume.job_title }}</p>
+    {% endif %}
+
+    <div class="contact">
+      {% if resume.email %}<span>Email: {{ resume.email }}</span>{% endif %}
+      {% if resume.phone %}<span>Phone: {{ resume.phone }}</span>{% endif %}
+      {% if resume.location %}<span>Location: {{ resume.location }}</span>{% endif %}
+      {% if resume.website %}<span>Website: {{ resume.website }}</span>{% endif %}
+    </div>
+  </header>
+
+  <!-- نبذة -->
+  {% if resume.bio %}
+  <section class="section">
+    <h2>Summary</h2>
+    <div class="bio">{{ resume.bio|linebreaks }}</div>
+  </section>
+  {% endif %}
+
+  <!-- خبرات -->
+  {% if resume.experiences.all %}
+  <section class="section">
+    <h2>Experience</h2>
+    {% for exp in resume.experiences.all %}
+      <div class="exp-item">
+        <h3>{{ exp.role }}</h3>
+        <p class="exp-meta">
+          {{ exp.organization }}
+          {% if exp.start_year or exp.end_year %}
+            | {{ exp.start_year }} - {{ exp.end_year }}
+          {% endif %}
+        </p>
+        {% if exp.description %}
+          <div class="exp-desc">{{ exp.description|linebreaks }}</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <!-- مهارات -->
+  {% if resume.skills.all %}
+  <section class="section">
+    <h2>Skills</h2>
+    <ul class="skills-list">
+      {% for skill in resume.skills.all %}
+        <li>{{ skill.name }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  <!-- شهادات -->
+  {% if resume.certificates.all %}
+  <section class="section">
+    <h2>Certifications</h2>
+    {% for cert in resume.certificates.all %}
+      <div class="cert-item">
+        <h3>{{ cert.name }}</h3>
+        <p class="exp-meta">
+          {{ cert.issuer }}
+          {% if cert.year %} | {{ cert.year }}{% endif %}
+        </p>
+      </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <!-- روابط -->
+  {% if resume.links.all %}
+  <section class="section">
+    <h2>Links</h2>
+    <ul style="list-style:none; padding:0;">
+      {% for link in resume.links.all %}
+        <li>{{ link.label }}: {{ link.url }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+</body>
+</html>
