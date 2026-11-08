@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📊 CV Studio — Architecture Diagrams</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  :root{
+    --bg:#0a0e14; --panel:#121a24; --panel2:#1a2532;
+    --accent:#5eead4; --accent2:#38bdf8; --accent3:#a78bfa;
+    --text:#e6eef5; --muted:#8aa0b3; --line:#243342;
+  }
+  [data-theme="light"]{
+    --bg:#f5f8fb; --panel:#ffffff; --panel2:#eef3f8;
+    --text:#1a2634; --muted:#5a6b7d; --line:#d6e0eb;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:"Segoe UI", Tahoma, system-ui, sans-serif;
+    background:var(--bg); color:var(--text);
+    min-height:100vh; line-height:1.6;
+    transition:background .3s, color .3s;
+  }
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    background:rgba(10,14,20,.85); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+    padding:12px 20px;
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:10px;
+  }
+  [data-theme="light"] .topbar{ background:rgba(245,248,251,.9); }
+  .topbar h1{
+    font-size:18px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .topbar .actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .btn{
+    border:none; border-radius:8px; padding:8px 14px;
+    font-weight:700; font-size:12.5px; cursor:pointer;
+    font-family:inherit; transition:transform .1s, filter .2s;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .btn:active{ transform:scale(.96); }
+  .btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .btn-ghost{
+    background:var(--panel2); border:1px solid var(--line);
+    color:var(--text);
+  }
+  .btn-ghost:hover{ filter:brightness(1.2); }
+  .btn-primary{
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#06121a;
+  }
+  .tabs{
+    display:flex; gap:6px; padding:14px 20px;
+    overflow-x:auto; border-bottom:1px solid var(--line);
+    background:var(--panel); position:sticky; top:61px; z-index:40;
+  }
+  .tabs::-webkit-scrollbar{ height:6px; }
+  .tabs::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+  .tab{
+    white-space:nowrap; padding:9px 16px; border-radius:9px;
+    font-size:13px; font-weight:700; cursor:pointer;
+    background:var(--panel2); border:1px solid var(--line);
+    color:var(--muted); font-family:inherit;
+    transition:all .2s; flex-shrink:0;
+    display:flex; align-items:center; gap:6px;
+  }
+  .tab:hover{ color:var(--text); filter:brightness(1.15); }
+  .tab.active{
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#06121a; border-color:transparent;
+    box-shadow:0 4px 14px rgba(94,234,212,.25);
+  }
+  .main{ max-width:1400px; margin:0 auto; padding:20px; }
+  .panel{
+    display:none; background:var(--panel);
+    border:1px solid var(--line); border-radius:16px;
+    overflow:hidden; animation:fadeIn .3s ease;
+  }
+  .panel.active{ display:block; }
+  @keyframes fadeIn{
+    from{ opacity:0; transform:translateY(8px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .panel-head{
+    padding:18px 22px;
+    border-bottom:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:flex-start;
+    flex-wrap:wrap; gap:12px;
+    background:var(--panel2);
+  }
+  .panel-head .info h2{
+    font-size:18px; color:var(--accent); margin-bottom:4px;
+  }
+  .panel-head .info p{
+    font-size:13px; color:var(--muted); max-width:600px;
+  }
+  .zoom-controls{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .zoom-controls .btn{ padding:6px 10px; font-size:12px; }
+  .zoom-level{
+    font-size:12px; color:var(--muted); min-width:48px;
+    text-align:center; font-family:monospace;
+  }
+  .diagram-wrap{
+    position:relative; overflow:auto; padding:30px;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(56,189,248,.06) 0%, transparent 40%),
+      radial-gradient(circle at 80% 100%, rgba(167,139,250,.06) 0%, transparent 40%);
+    min-height:400px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:grab;
+  }
+  .diagram-wrap:active{ cursor:grabbing; }
+  .diagram-wrap::-webkit-scrollbar{ width:10px; height:10px; }
+  .diagram-wrap::-webkit-scrollbar-thumb{ background:var(--line); border-radius:5px; }
+  .diagram-inner{
+    transition:transform .15s ease;
+    transform-origin:center center;
+    display:inline-block;
+  }
+  .diagram-inner svg{
+    max-width:none !important;
+    height:auto; display:block;
+  }
+  .diagram-wrap.fullscreen{
+    position:fixed; inset:0; z-index:200;
+    background:var(--bg); padding:60px 20px 20px;
+  }
+  .fullscreen-close{
+    position:fixed; top:16px; left:16px; z-index:201;
+    background:var(--panel2); border:1px solid var(--line);
+    color:var(--text); width:42px; height:42px;
+    border-radius:50%; cursor:pointer; font-size:18px;
+    display:none; align-items:center; justify-content:center;
+  }
+  .fullscreen-close.show{ display:flex; }
+  .fullscreen-close:hover{ filter:brightness(1.2); }
+  .panel-foot{
+    padding:14px 22px;
+    border-top:1px solid var(--line);
+    background:var(--panel2);
+    font-size:12px; color:var(--muted);
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:8px;
+  }
+  .panel-foot code{
+    background:var(--bg); padding:2px 8px;
+    border-radius:5px; color:var(--accent);
+    font-size:11.5px;
+  }
+  .loading{ text-align:center; padding:60px 20px; color:var(--muted); }
+  .spinner{
+    width:40px; height:40px; margin:0 auto 16px;
+    border:3px solid var(--line);
+    border-top-color:var(--accent);
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .error-box{
+    background:rgba(239,68,68,.1);
+    border:1px solid rgba(239,68,68,.4);
+    border-radius:10px; padding:16px; margin:20px;
+    color:#ff8f8f; font-size:13px;
+  }
+  .toast{
+    position:fixed; bottom:24px; left:50%;
+    transform:translateX(-50%) translateY(100px);
+    background:var(--panel2); border:1px solid var(--accent);
+    padding:11px 20px; border-radius:10px;
+    font-size:13px; font-weight:600; color:var(--text);
+    transition:transform .3s ease; z-index:300;
+    box-shadow:0 8px 30px rgba(0,0,0,.5);
+    max-width:90vw; text-align:center;
+  }
+  .toast.show{ transform:translateX(-50%) translateY(0); }
+  @media print{
+    .topbar, .tabs, .zoom-controls, .panel-foot, .toast{ display:none !important; }
+    .panel{ display:block !important; page-break-after:always; }
+    .diagram-wrap{ overflow:visible; }
+    body{ background:#fff; color:#000; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📊 CV Studio — Architecture Diagrams</h1>
+  <div class="actions">
+    <button class="btn btn-primary" id="btnDownloadAll">📥 Download All PNG</button>
+    <button class="btn btn-ghost" id="btnTheme">🌙 Theme</button>
+    <button class="btn btn-ghost" id="btnPrint">🖨 Print</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+<div class="main" id="main"></div>
+<button class="fullscreen-close" id="btnExitFullscreen">✕</button>
+<div class="toast" id="toast"></div>
+
+<script>
+var diagrams = [
+  {
+    id: 'overview',
+    title: 'Project Overview',
+    icon: '🗺️',
+    desc: 'Core features: Public Resume, Privacy, ATS, PDF, TTS, Analytics.',
+    code: `flowchart TB
+      U["👤 User"] --> APP["🌐 CV Studio"]
+      APP --> RES["📄 Resume"]
+      RES --> VIS{"Privacy Setting"}
+      VIS -->|Public| PUB["🔗 Shareable Public Link"]
+      VIS -->|Private| PRIV["🔒 Resume Hidden"]
+      APP --> ATS["🎯 ATS Analysis"]
+      APP --> PDF["📑 PDF Export"]
+      APP --> TTS["🎙️ Arabic Text-to-Speech"]
+      APP --> ANA["📊 View Analytics"]
+      style APP fill:#5eead4,color:#000
+      style RES fill:#38bdf8,color:#000
+      style ATS fill:#f6b93b,color:#000`
+  },
+  {
+    id: 'lifecycle',
+    title: 'Resume Lifecycle',
+    icon: '🔄',
+    desc: 'Simplified flow for managing and sharing a resume.',
+    code: `flowchart TD
+      A["📝 Create or Edit Resume"] --> B["💾 Save Data"]
+      B --> C{"🔐 Set Visibility"}
+      C -->|Public| D["🌍 Public Link Enabled"]
+      C -->|Private| E["🔒 Access Blocked"]
+      D --> F["👁️ Link Visited"]
+      F --> G["📊 View Logged"]
+      B --> H["📑 Export to PDF"]
+      B --> I["🎙️ Generate Audio Intro"]
+      style D fill:#22c55e,color:#000
+      style E fill:#f87171,color:#000`
+  },
+  {
+    id: 'erd',
+    title: 'Database Schema',
+    icon: '💾',
+    desc: 'Actual entities: Users, Resumes, Experiences, Skills, Certificates, Links, Views.',
+    code: `erDiagram
+    USERS ||--o{ RESUMES : "owns"
+    RESUMES ||--o{ EXPERIENCES : "has"
+    RESUMES ||--o{ SKILLS : "has"
+    RESUMES ||--o{ CERTIFICATES : "has"
+    RESUMES ||--o{ RESUME_LINKS : "has"
+    RESUMES ||--o{ RESUME_VIEWS : "viewed_by"
+    USERS {
+        int id PK
+        string username UK
+        string email
+        string password_hash
+        boolean is_staff
+        boolean is_active
+        datetime created_at
+    }
+    RESUMES {
+        int id PK
+        int user_id FK
+        string slug UK
+        string full_name
+        string job_title
+        text bio
+        boolean is_public
+        string template
+        string language
+        datetime updated_at
+    }
+    EXPERIENCES {
+        int id PK
+        int resume_id FK
+        string role
+        string organization
+        string start_year
+        string end_year
+        text description
+    }
+    SKILLS {
+        int id PK
+        int resume_id FK
+        string name
+        int level
+    }
+    CERTIFICATES {
+        int id PK
+        int resume_id FK
+        string name
+        string issuer
+        string year
+    }
+    RESUME_LINKS {
+        int id PK
+        int resume_id FK
+        string label
+        string url
+    }
+    RESUME_VIEWS {
+        int id PK
+        int resume_id FK
+        string ip_address
+        string device
+        datetime viewed_at
+    }`
+  },
+  {
+    id: 'architecture',
+    title: 'System Architecture',
+    icon: '⚙️',
+    desc: 'Components: Vue 3 + Django REST Framework + JWT + PostgreSQL + Docker.',
+    code: `flowchart LR
+      subgraph Frontend["🖥️ Frontend"]
+        V["Vue 3 + Vite"]
+        P["Pinia Store"]
+        R["Vue Router"]
+      end
+      subgraph Backend["⚙️ Backend"]
+        API["Django REST Framework"]
+        AUTH["JWT Authentication"]
+        SVC["gTTS + WeasyPrint + ATS"]
+      end
+      subgraph Data["💾 Data Layer"]
+        DB[("PostgreSQL / SQLite")]
+        MEDIA["📁 Media Storage"]
+      end
+      subgraph DevOps["🔧 DevOps"]
+        DC["Docker Compose"]
+        G["Gunicorn"]
+        N["Nginx"]
+      end
+      V --> R
+      R --> P
+      P -->|JWT Token| API
+      API --> AUTH
+      API --> SVC
+      API <--> DB
+      API --> MEDIA
+      N --> G
+      G --> API
+      DC --> Backend
+      style API fill:#5eead4,color:#000
+      style V fill:#38bdf8,color:#000
+      style DB fill:#a78bfa,color:#000
+      style DC fill:#f6b93b,color:#000`
+  },
+  {
+    id: 'access',
+    title: 'Access Control',
+    icon: '🔐',
+    desc: 'Security: owner-only queries, serializer validation, unified 404.',
+    code: `flowchart TD
+      A["📥 Access Request"] --> B{"🔑 Authenticated?"}
+      B -->|Yes| C["🎯 Filter by Owner"]
+      C --> D{"✅ Is Resume Owned?"}
+      D -->|Yes| E["✅ Access Granted"]
+      D -->|No| F["❌ Access Denied"]
+      B -->|Guest| G{"🌍 Is Resume Public?"}
+      G -->|Yes| H["👁️ View Public Resume"]
+      G -->|No| I["404 Not Found"]
+      F --> I
+      style E fill:#22c55e,color:#000
+      style H fill:#22c55e,color:#000
+      style I fill:#f87171,color:#000`
+  },
+  {
+    id: 'ats',
+    title: 'ATS Analysis Flow',
+    icon: '🎯',
+    desc: 'Keyword-based analysis flow for English and Arabic.',
+    code: `flowchart TD
+      A["📄 Resume"] --> C["🔍 Keyword Extraction"]
+      B["📋 Job Description"] --> C
+      C --> D["🌐 Arabic & English Processing"]
+      D --> E["⚖️ Keyword Matching"]
+      E --> F["✅ Matched Keywords"]
+      E --> G["❌ Missing Keywords"]
+      F --> H["📊 Score 0-95"]
+      G --> H
+      H --> I["💡 Smart Suggestions"]
+      style H fill:#5eead4,color:#000
+      style I fill:#f6b93b,color:#000`
+  },
+  {
+    id: 'pdf',
+    title: 'PDF Export',
+    icon: '📑',
+    desc: 'Text-based PDF export compatible with ATS.',
+    code: `flowchart TD
+      A["📄 Resume Data"] --> B["🎨 Prepare Content"]
+      B --> C["🖨️ WeasyPrint: Generate PDF"]
+      C --> D["📑 Text-based PDF"]
+      D --> E["⬇️ Download or Share"]
+      style D fill:#38bdf8,color:#000
+      style E fill:#22c55e,color:#000`
+  },
+  {
+    id: 'tts',
+    title: 'Text-to-Speech',
+    icon: '🎙️',
+    desc: 'Convert resume summary to an Arabic audio intro via gTTS.',
+    code: `flowchart TD
+      A["✍️ Resume Summary"] --> B["📤 Send to gTTS"]
+      B --> C["🔊 Generate Arabic Audio"]
+      C --> D["🎙️ MP3 File"]
+      D --> E["▶️ Available in Resume"]
+      E --> F["⬇️ User Listens or Downloads"]
+      style D fill:#a78bfa,color:#000
+      style F fill:#22c55e,color:#000`
+  },
+  {
+    id: 'analytics',
+    title: 'View Analytics',
+    icon: '📊',
+    desc: 'Track resume views and display stats.',
+    code: `sequenceDiagram
+      participant V as 👁️ Visitor
+      participant API as ⚙️ Django API
+      participant DB as 💾 Database
+      participant O as 👤 Resume Owner
+      V->>API: Open resume link
+      API->>API: Verify resume is public
+      API->>DB: Log view
+      DB-->>API: View confirmed
+      API-->>V: Display resume
+      O->>API: Request resume analytics
+      API->>DB: Fetch view data
+      DB-->>API: Analytics data
+      API-->>O: Display stats`
+  },
+  {
+    id: 'delivery',
+    title: 'CI/CD Pipeline',
+    icon: '🚀',
+    desc: 'Automated testing and build via GitHub Actions.',
+    code: `flowchart TD
+      A["📤 Push to GitHub"] --> B["⚙️ GitHub Actions"]
+      B --> C["🔧 Backend Checks"]
+      B --> D["🖥️ Frontend Build"]
+      C --> E{"Tests Pass?"}
+      D --> F{"Build Pass?"}
+      E -->|Yes| G["✅ Backend Job Passed"]
+      E -->|No| H["❌ Backend Job Failed"]
+      F -->|Yes| I["✅ Frontend Job Passed"]
+      F -->|No| J["❌ Frontend Job Failed"]
+      style G fill:#22c55e,color:#000
+      style I fill:#22c55e,color:#000
+      style H fill:#f87171,color:#000
+      style J fill:#f87171,color:#000`
+  }
+];
+
+var isDark = true;
+
+function initMermaid(){
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: isDark ? 'dark' : 'default',
+    themeVariables: isDark ? {
+      primaryColor: '#1a2532',
+      primaryTextColor: '#e6eef5',
+      primaryBorderColor: '#5eead4',
+      lineColor: '#5eead4',
+      secondaryColor: '#243342',
+      tertiaryColor: '#121a24',
+      background: '#121a24',
+      mainBkg: '#1a2532',
+      nodeBorder: '#5eead4',
+      clusterBkg: '#121a24',
+      clusterBorder: '#243342',
+      titleColor: '#e6eef5',
+      edgeLabelBackground: '#1a2532',
+      fontSize: '14px'
+    } : {
+      primaryColor: '#eef3f8',
+      primaryTextColor: '#1a2634',
+      primaryBorderColor: '#38bdf8',
+      lineColor: '#38bdf8',
+      background: '#ffffff',
+      mainBkg: '#eef3f8',
+      nodeBorder: '#38bdf8',
+      titleColor: '#1a2634',
+      fontSize: '14px'
+    },
+    flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'basis' },
+    sequence: { useMaxWidth: false },
+    gantt: { useMaxWidth: false },
+    er: { useMaxWidth: false }
+  });
+}
+
+function buildTabs(){
+  var tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  diagrams.forEach(function(d, i){
+    var tab = document.createElement('button');
+    tab.className = 'tab' + (i === 0 ? ' active' : '');
+    tab.dataset.id = d.id;
+    tab.innerHTML = '<span>' + d.icon + '</span>' + d.title;
+    tab.addEventListener('click', function(){ activate(d.id); });
+    tabs.appendChild(tab);
+  });
+}
+
+function buildPanels(){
+  var main = document.getElementById('main');
+  main.innerHTML = '';
+  diagrams.forEach(function(d, i){
+    var panel = document.createElement('div');
+    panel.className = 'panel' + (i === 0 ? ' active' : '');
+    panel.id = 'panel-' + d.id;
+    panel.innerHTML =
+      '<div class="panel-head">' +
+        '<div class="info">' +
+          '<h2>' + d.icon + ' ' + d.title + '</h2>' +
+          '<p>' + d.desc + '</p>' +
+        '</div>' +
+        '<div class="zoom-controls">' +
+          '<button class="btn btn-ghost" data-zoom="out" data-id="' + d.id + '">−</button>' +
+          '<span class="zoom-level" id="zl-' + d.id + '">100%</span>' +
+          '<button class="btn btn-ghost" data-zoom="in" data-id="' + d.id + '">+</button>' +
+          '<button class="btn btn-ghost" data-zoom="reset" data-id="' + d.id + '">⟲</button>' +
+          '<button class="btn btn-ghost" data-zoom="full" data-id="' + d.id + '">⛶</button>' +
+          '<button class="btn btn-primary" data-download="' + d.id + '" title="Download PNG">💾 PNG</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="diagram-wrap" id="wrap-' + d.id + '">' +
+        '<div class="diagram-inner" id="inner-' + d.id + '">' +
+          '<div class="loading"><div class="spinner"></div>Rendering…</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="panel-foot">' +
+        '<span>Drag to pan · + / − to zoom · ⛶ fullscreen · 💾 download PNG</span>' +
+        '<code>mermaid</code>' +
+      '</div>';
+    main.appendChild(panel);
+  });
+
+  Array.prototype.forEach.call(
+    document.querySelectorAll('[data-zoom]'),
+    function(btn){
+      btn.addEventListener('click', function(){
+        handleZoom(btn.dataset.id, btn.dataset.zoom);
+      });
+    }
+  );
+
+  Array.prototype.forEach.call(
+    document.querySelectorAll('[data-download]'),
+    function(btn){
+      btn.addEventListener('click', function(){
+        downloadDiagram(btn.dataset.download);
+      });
+    }
+  );
+}
+
+var rendered = {};
+
+async function renderDiagram(d){
+  if (rendered[d.id]) return;
+  var inner = document.getElementById('inner-' + d.id);
+  if (!inner) return;
+
+  try{
+    var result = await mermaid.render('svg-' + d.id, d.code);
+    inner.innerHTML = result.svg;
+    rendered[d.id] = true;
+    var svg = inner.querySelector('svg');
+    if (svg){
+      svg.style.maxWidth = 'none';
+      svg.style.height = 'auto';
+    }
+  }catch(err){
+    inner.innerHTML = '<div class="error-box">⚠️ Render Error: ' + (err.message || err) + '</div>';
+    console.error('Mermaid error', d.id, err);
+  }
+}
+
+var zoomState = {};
+
+function getZoom(id){
+  if (!zoomState[id]) zoomState[id] = { scale: 1, x: 0, y: 0 };
+  return zoomState[id];
+}
+
+function applyTransform(id){
+  var z = getZoom(id);
+  var inner = document.getElementById('inner-' + id);
+  if (!inner) return;
+  inner.style.transform = 'translate(' + z.x + 'px, ' + z.y + 'px) scale(' + z.scale + ')';
+  var lbl = document.getElementById('zl-' + id);
+  if (lbl) lbl.textContent = Math.round(z.scale * 100) + '%';
+}
+
+function handleZoom(id, action){
+  var z = getZoom(id);
+  if (action === 'in') z.scale = Math.min(z.scale * 1.2, 4);
+  else if (action === 'out') z.scale = Math.max(z.scale / 1.2, 0.3);
+  else if (action === 'reset'){ z.scale = 1; z.x = 0; z.y = 0; }
+  else if (action === 'full'){
+    var wrap = document.getElementById('wrap-' + id);
+    if (wrap){
+      wrap.classList.toggle('fullscreen');
+      document.getElementById('btnExitFullscreen')
+        .classList.toggle('show', wrap.classList.contains('fullscreen'));
+    }
+    return;
+  }
+  applyTransform(id);
+}
+
+function setupPan(id){
+  var wrap = document.getElementById('wrap-' + id);
+  if (!wrap) return;
+  var isDown = false, startX, startY, startZX, startZY;
+
+  wrap.addEventListener('mousedown', function(e){
+    if (e.target.closest('.zoom-controls')) return;
+    isDown = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    var z = getZoom(id);
+    startZX = z.x;
+    startZY = z.y;
+  });
+  window.addEventListener('mousemove', function(e){
+    if (!isDown) return;
+    var z = getZoom(id);
+    z.x = startZX + (e.clientX - startX);
+    z.y = startZY + (e.clientY - startY);
+    applyTransform(id);
+  });
+  window.addEventListener('mouseup', function(){ isDown = false; });
+
+  wrap.addEventListener('wheel', function(e){
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    var z = getZoom(id);
+    var factor = e.deltaY < 0 ? 1.1 : 0.9;
+    z.scale = Math.max(0.3, Math.min(4, z.scale * factor));
+    applyTransform(id);
+  }, { passive: false });
+}
+
+function activate(id){
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){
+    t.classList.toggle('active', t.dataset.id === id);
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.panel'), function(p){
+    p.classList.toggle('active', p.id === 'panel-' + id);
+  });
+  var d = diagrams.find(function(x){ return x.id === id; });
+  if (d) renderDiagram(d);
+}
+
+async function downloadDiagram(id){
+  var d = diagrams.find(function(x){ return x.id === id; });
+  if (!d){ toast('⚠️ Diagram not found'); return; }
+
+  var wrap = document.getElementById('wrap-' + id);
+  var inner = document.getElementById('inner-' + id);
+  if (!wrap || !inner){ toast('⚠️ Not rendered'); return; }
+
+  var svg = inner.querySelector('svg');
+  if (!svg){ toast('⚠️ Diagram not ready'); return; }
+
+  toast('⏳ Exporting high-res…');
+
+  try{
+    var oldTransform = inner.style.transform;
+    var oldScrollX = wrap.scrollLeft;
+    var oldScrollY = wrap.scrollTop;
+
+    inner.style.transform = 'none';
+    wrap.scrollLeft = 0;
+    wrap.scrollTop = 0;
+
+    await new Promise(function(r){ requestAnimationFrame(r); });
+
+    var svgWidth = svg.viewBox.baseVal.width || svg.getBoundingClientRect().width;
+    var svgHeight = svg.viewBox.baseVal.height || svg.getBoundingClientRect().height;
+    if (!svgWidth || svgWidth < 10){
+      var rect = svg.getBoundingClientRect();
+      svgWidth = rect.width;
+      svgHeight = rect.height;
+    }
+
+    var padding = 60;
+    var width = Math.ceil(svgWidth + padding * 2);
+    var height = Math.ceil(svgHeight + padding * 2);
+
+    var canvas = await html2canvas(inner, {
+      backgroundColor: isDark ? '#0a0e14' : '#f5f8fb',
+      width: width,
+      height: height,
+      scale: 3,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: width,
+      windowHeight: height,
+      onclone: function(clonedDoc){
+        var clonedInner = clonedDoc.getElementById('inner-' + id);
+        if (clonedInner){
+          clonedInner.style.transform = 'none';
+          clonedInner.style.width = width + 'px';
+          clonedInner.style.height = height + 'px';
+          clonedInner.style.display = 'flex';
+          clonedInner.style.alignItems = 'center';
+          clonedInner.style.justifyContent = 'center';
+        }
+      }
+    });
+
+    var link = document.createElement('a');
+    link.download = 'CV-Studio-' + d.title.replace(/\s+/g, '-') + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    inner.style.transform = oldTransform;
+    wrap.scrollLeft = oldScrollX;
+    wrap.scrollTop = oldScrollY;
+
+    toast('✅ Downloaded: ' + d.title);
+  }catch(err){
+    console.error('DOWNLOAD ERROR:', err);
+    toast('❌ Failed: ' + (err.message || 'Error'));
+  }
+}
+
+async function downloadAll(){
+  var btn = document.getElementById('btnDownloadAll');
+  btn.disabled = true;
+  btn.textContent = '⏳ Downloading…';
+
+  for (var i = 0; i < diagrams.length; i++){
+    var d = diagrams[i];
+    activate(d.id);
+    await new Promise(function(r){ setTimeout(r, 900); });
+    await downloadDiagram(d.id);
+    await new Promise(function(r){ setTimeout(r, 700); });
+  }
+
+  btn.disabled = false;
+  btn.textContent = '📥 Download All PNG';
+  toast('✅ Downloaded ' + diagrams.length + ' diagrams');
+}
+
+document.getElementById('btnDownloadAll').addEventListener('click', function(){
+  downloadAll();
+});
+
+document.getElementById('btnTheme').addEventListener('click', function(){
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('btnTheme').textContent = isDark ? '🌙 Theme' : '☀️ Theme';
+  rendered = {};
+  initMermaid();
+  diagrams.forEach(function(d){
+    var inner = document.getElementById('inner-' + d.id);
+    if (inner) inner.innerHTML = '<div class="loading"><div class="spinner"></div>Rendering…</div>';
+  });
+  var active = document.querySelector('.tab.active');
+  if (active) renderDiagram(diagrams.find(function(x){ return x.id === active.dataset.id; }));
+});
+
+document.getElementById('btnPrint').addEventListener('click', function(){
+  toast('🖨 Choose "Save as PDF" in print dialog');
+  setTimeout(function(){ window.print(); }, 300);
+});
+
+document.getElementById('btnExitFullscreen').addEventListener('click', function(){
+  var wrap = document.querySelector('.diagram-wrap.fullscreen');
+  if (wrap) wrap.classList.remove('fullscreen');
+  document.getElementById('btnExitFullscreen').classList.remove('show');
+});
+
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape'){
+    var wrap = document.querySelector('.diagram-wrap.fullscreen');
+    if (wrap) wrap.classList.remove('fullscreen');
+    document.getElementById('btnExitFullscreen').classList.remove('show');
+  }
+});
+
+var toastTimer;
+function toast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2500);
+}
+
+document.documentElement.setAttribute('data-theme', 'dark');
+initMermaid();
+buildTabs();
+buildPanels();
+diagrams.forEach(function(d){ setupPan(d.id); });
+renderDiagram(diagrams[0]);
+</script>
+</body>
+</html>
